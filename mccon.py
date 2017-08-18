@@ -140,7 +140,7 @@ def init(colour=True, log=None, default_prefix='mccon',\
         ERROR_COLOUR = WARN_COLOUR = STAT_COLOUR = DULL_COLOUR = \
         USER_COLOUR = HIGHLIGHT_COLOUR = LOWLIGHT_COLOUR = ''
         STDERR_PREFIX = '+    '
-        STDERR_HEADER = '\n+ '
+        STDERR_HEADER = '\n'
 
     #status code highlighting
     stat_highlight.update({STAT : STAT_COLOUR,
@@ -150,7 +150,7 @@ def init(colour=True, log=None, default_prefix='mccon',\
     global mccon_out, mccon_err
     if log is not None:
         #open log_file in append mode
-        log_file = open(log, "a")
+        log_file = open(log, 'a')
 
     #create and set up the new sterr and stdout objects
     mccon_out = MCConOut(old_stdout,log_file)
@@ -282,6 +282,7 @@ class MCConErr():
 
     def process_text(self,text):
         #print to screen if: in loggin mode, or user feedback in non-loggin mode
+        text = text.replace('\n','\n'+STDERR_PREFIX)
         if use_colour:
             try:
                 #pick the message colour
@@ -290,8 +291,7 @@ class MCConErr():
                 msg_col = USER_COLOUR \
                     if self.user else msg_col
                 #format the text
-                form_text = text.replace('\n','\n'+STDERR_PREFIX)
-                form_text = NO_COLOUR + msg_col + form_text + NO_COLOUR
+                form_text = NO_COLOUR + msg_col + text + NO_COLOUR
                 return form_text
             except:
                 traceback.print_exc(file=self.old)
@@ -331,6 +331,8 @@ class MCConErr():
                     except: #failed to get item in the timeout
                         if not self.file_only and \
                             ((self.user and user_mode) or not user_mode):
+                            if self.log:
+                                self.log.write('\n')
                             self.old.write('\n')
                             self.flush()
                         mccon_out.allowed = True
