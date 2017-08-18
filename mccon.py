@@ -100,6 +100,13 @@ def init(colour=True, log=None, default_prefix='mccon',\
     global use_colour
     use_colour = colour
 
+    global STDERR_PREFIX, STDERR_HEADER, STDERR_SPACE
+    # the + char prefix makes stderr
+    # output easier to search for in the log file
+    STDERR_PREFIX = '+'
+    STDERR_SPACE  = '    '
+    #printed at the start of an stderr print block (black+ on dark red bg)
+    STDERR_HEADER = '\n+    '
 
     # console colour codes.the various ANSI escape codes, including the colours below
     # are documented at https://en.wikipedia.org/wiki/ANSI_escape_code
@@ -110,7 +117,7 @@ def init(colour=True, log=None, default_prefix='mccon',\
     global PROMPT_COLOUR, USER_INPUT_COLOUR, DISABLED_COLOUR,\
            NO_COLOUR, ERROR_COLOUR, WARN_COLOUR, INFO_COLOUR, DULL_COLOUR,\
            USER_COLOUR, HIGHLIGHT_COLOUR, LOWLIGHT_COLOUR,\
-           STDERR_PREFIX, STDERR_HEADER
+           STDERR_COL, STDERR_BG_COL
 
     #set up the colour scheme
     if use_colour:
@@ -127,20 +134,17 @@ def init(colour=True, log=None, default_prefix='mccon',\
         LOWLIGHT_COLOUR     = gen_color(30,True)       #dark grey (light black)
 
         # a few other colour related vars
-        # dark red bg, black fg, the + char prefix makes stderr
-        # output easier to search for in the log file
-        STDERR_PREFIX = NO_COLOUR + gen_color(41) + gen_color(30) + '+' +\
-            NO_COLOUR + '    ' + ERROR_COLOUR
-        #printed at the start of an stderr print block (black+ on dark red bg)
-        STDERR_HEADER = '\n'+NO_COLOUR + gen_color(41) + gen_color(30) + ''
+        # dark red bg, black fg,
+        STDERR_BG_COL = NO_COLOUR + gen_color(41) + gen_color(30)
+        STDERR_COL = ERROR_COLOUR
 
     #clear all formatting
     else:
         PROMPT_COLOUR = USER_INPUT_COLOUR = DISABLED_COLOUR = NO_COLOUR = \
         ERROR_COLOUR = WARN_COLOUR = INFO_COLOUR = DULL_COLOUR = \
         USER_COLOUR = HIGHLIGHT_COLOUR = LOWLIGHT_COLOUR = ''
-        STDERR_PREFIX = '+    '
-        STDERR_HEADER = '\n'
+        STDERR_BG_COL = ''
+        STDERR_COL= ''
 
     #status code highlighting
     stat_highlight.update({INFO : INFO_COLOUR,
@@ -282,28 +286,33 @@ class MCConErr():
 
     def process_text(self,text):
         #print to screen if: in loggin mode, or user feedback in non-loggin mode
-        text = text.replace('\n','\n'+STDERR_PREFIX)
-        if use_colour:
-            try:
+        try:
+            if use_colour:
                 #pick the message colour
-                msg_col = ERROR_COLOUR \
+                msg_col = STDERR_COL \
                     if self.error else WARN_COLOUR
                 msg_col = USER_COLOUR \
                     if self.user else msg_col
                 #format the text
-                form_text = NO_COLOUR + msg_col + text + NO_COLOUR
+                #if STDERR_HEADER in text:
+                #    form_text = text.replace(STDERR_HEADER, \
+                #        STDERR_BG_COL + STDERR_HEADER) + NO_COLOUR
+                #else:
+                form_text = text.replace(STDERR_PREFIX, \
+                    STDERR_BG_COL + STDERR_PREFIX + NO_COLOUR + msg_col)
+                #form_text = form_text + NO_COLOUR
                 return form_text
-            except:
-                traceback.print_exc(file=self.old)
+        except:
+            traceback.print_exc(file=self.old)
         return text
+
 
     def write(self,text):
         try:
             with lock:
                 #if the exception header is enabled, add it to the queue
                 if self.queue.empty() and self.print_header:
-                    self.queue.put(STDERR_HEADER +\
-                        _logprefix()+self.msg+NO_COLOUR+'\n')
+                    self.queue.put('\n'+_logprefix()+self.msg+'\n')
                 self.queue.put(text)
                 if self.t is None:
                     self.t = Timer(timeout,self.write_buffer,args=[False])
@@ -328,6 +337,7 @@ class MCConErr():
                     try:
                         #try to get an item
                         text = self.queue.get(True,timeout)
+                        text = text.replace('\n','\n'+STDERR_PREFIX+STDERR_SPACE)
                     except: #failed to get item in the timeout
                         if not self.file_only and \
                             ((self.user and user_mode) or not user_mode):
@@ -377,7 +387,7 @@ def close():
 # generates a colour string for the given code and brightness flag
 def gen_color(code, bright=False):
     return '\033['+str(code) + (';1m' if bright else 'm') #+' '+\
-        #str(code*10+(1 if bright else 0))+'_'
+    #    str(code*10+(1 if bright else 0))+'_'
     #comment out the above two lines for debugging
 
 @contextmanager
