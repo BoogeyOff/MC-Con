@@ -72,8 +72,8 @@ global prefix
 prefix = 'mccon'
 
 # status keywords for convenience; and their highlight colours
-global STAT, WARN, ERROR
-STAT = 'STAT'
+global INFO, WARN, ERROR
+INFO = 'INFO'
 WARN = 'WARN'
 ERRO = 'ERRO'
 stat_highlight = {}
@@ -108,7 +108,7 @@ def init(colour=True, log=None, default_prefix='mccon',\
     # the m is the colour instruction code. 30s numbers - foreground. 40s - backgr
     # use the gen_color method to create your own colours that aren't listed here
     global PROMPT_COLOUR, USER_INPUT_COLOUR, DISABLED_COLOUR,\
-           NO_COLOUR, ERROR_COLOUR, WARN_COLOUR, STAT_COLOUR, DULL_COLOUR,\
+           NO_COLOUR, ERROR_COLOUR, WARN_COLOUR, INFO_COLOUR, DULL_COLOUR,\
            USER_COLOUR, HIGHLIGHT_COLOUR, LOWLIGHT_COLOUR,\
            STDERR_PREFIX, STDERR_HEADER
 
@@ -120,7 +120,7 @@ def init(colour=True, log=None, default_prefix='mccon',\
         NO_COLOUR           = gen_color(0)             #back to default
         ERROR_COLOUR        = gen_color(31,True)       #bright red
         WARN_COLOUR         = gen_color(33,True)       #bright yellow
-        STAT_COLOUR         = gen_color(37)            #white/grey
+        INFO_COLOUR         = gen_color(37)            #white/grey
         DULL_COLOUR         = gen_color(32)            #dark green
         USER_COLOUR         = gen_color(32,True)       #bright green
         HIGHLIGHT_COLOUR    = gen_color(35,True)       #bright magenta
@@ -137,13 +137,13 @@ def init(colour=True, log=None, default_prefix='mccon',\
     #clear all formatting
     else:
         PROMPT_COLOUR = USER_INPUT_COLOUR = DISABLED_COLOUR = NO_COLOUR = \
-        ERROR_COLOUR = WARN_COLOUR = STAT_COLOUR = DULL_COLOUR = \
+        ERROR_COLOUR = WARN_COLOUR = INFO_COLOUR = DULL_COLOUR = \
         USER_COLOUR = HIGHLIGHT_COLOUR = LOWLIGHT_COLOUR = ''
         STDERR_PREFIX = '+    '
         STDERR_HEADER = '\n'
 
     #status code highlighting
-    stat_highlight.update({STAT : STAT_COLOUR,
+    stat_highlight.update({INFO : INFO_COLOUR,
                            WARN : WARN_COLOUR,
                            ERRO : ERROR_COLOUR})
 
@@ -449,7 +449,7 @@ def warn():
 
 @contextmanager
 #prints a time-stamp log message with a status
-def logstat(typ=STAT):
+def loginfo(typ=INFO):
     mccon_out.write(_logprefix(typ))
     yield
 
