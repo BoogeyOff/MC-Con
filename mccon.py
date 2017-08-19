@@ -294,25 +294,27 @@ class MCConErr():
                 msg_col = USER_COLOUR \
                     if self.user else msg_col
                 #format the text
-                #if STDERR_HEADER in text:
-                #    form_text = text.replace(STDERR_HEADER, \
-                #        STDERR_BG_COL + STDERR_HEADER) + NO_COLOUR
+                #if STDERR_BG_COL in text:
+                #    pass
+                    #form_text = text.replace(STDERR_HEADER, \
+                    #    STDERR_BG_COL + STDERR_HEADER) + NO_COLOUR
                 #else:
                 form_text = text.replace(STDERR_PREFIX, \
                     STDERR_BG_COL + STDERR_PREFIX + NO_COLOUR + msg_col)
-                #form_text = form_text + NO_COLOUR
+                #form_text = form_text.replace(SEPARATOR,
+                #    DISABLED_COLOUR + SEPARATOR + NO_COLOUR + STDERR_BG_COL)
                 return form_text
         except:
             traceback.print_exc(file=self.old)
         return text
-
 
     def write(self,text):
         try:
             with lock:
                 #if the exception header is enabled, add it to the queue
                 if self.queue.empty() and self.print_header:
-                    self.queue.put('\n'+_logprefix()+self.msg+'\n')
+                    self.queue.put('\n' + STDERR_BG_COL + _logprefix() +
+                        self.msg + NO_COLOUR + '\n')
                 self.queue.put(text)
                 if self.t is None:
                     self.t = Timer(timeout,self.write_buffer,args=[False])
@@ -343,17 +345,21 @@ class MCConErr():
                             ((self.user and user_mode) or not user_mode):
                             if self.log:
                                 self.log.write('\n')
-                            self.old.write('\n')
+                            self.old.write('\n'+NO_COLOUR)
                             self.flush()
                         mccon_out.allowed = True
                         break
-                    # first write to the log file
-                    if self.log:
-                        self.log.write(text)
                     #print if: in user mode and done with user() or not in user mode
                     if not self.file_only and \
                         ((self.user and user_mode) or not user_mode):
                         self.old.write(self.process_text(text))
+                    #remove the colour prefix
+                    if STDERR_BG_COL in text:
+                        text = text.replace(STDERR_BG_COL,'')
+                        text = text.replace(NO_COLOUR,'')
+                    # write to the log file
+                    if self.log:
+                        self.log.write(text)
                     #force a disk write on a new line
                     if '\n' in text:
                         self.flush()
@@ -386,8 +392,8 @@ def close():
 
 # generates a colour string for the given code and brightness flag
 def gen_color(code, bright=False):
-    return '\033['+str(code) + (';1m' if bright else 'm') #+' '+\
-    #    str(code*10+(1 if bright else 0))+'_'
+    return '\033['+str(code) + (';1m' if bright else 'm') #+ ' ' + \
+    #    str(code*10+(1 if bright else 0)) + '_'
     #comment out the above two lines for debugging
 
 @contextmanager
