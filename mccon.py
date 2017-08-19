@@ -420,10 +420,14 @@ def user_err():
     mccon_err.user = False
 
 @contextmanager
-#highlight with the default colour scheme
-def highlight(hiwords,lowords):
+# highlight with the default colour scheme
+def highlight(hiwords, lowords):
+    old_himap = mccon_out.high_words
+    old_lomap = mccon_out.low_words
     high_map = {}
+    high_map.update(old_himap)
     low_map = {}
+    low_map.update(old_lomap)
     for word in hiwords:
         high_map[word] = None
     for word in lowords:
@@ -431,17 +435,17 @@ def highlight(hiwords,lowords):
     mccon_out.high_words = high_map
     mccon_out.low_words = low_map
     yield
-    mccon_out.high_words = {}
-    mccon_out.low_words = {}
+    mccon_out.high_words = old_himap
+    mccon_out.low_words = old_lomap
 
 @contextmanager
-#highlight with custom colours
-def highmap(hiwords,lowords):
+# highlight with custom colours
+def highmap(hiwords):
+    old_himap = mccon_out.high_words
     mccon_out.high_words = hiwords
-    mccon_out.low_words = lowords
+    mccon_out.high_words.update(old_himap)
     yield
-    mccon_out.high_words = {}
-    mccon_out.low_words = {}
+    mccon_out.high_words = old_himap
 
 @contextmanager
 def error():
@@ -465,7 +469,7 @@ def warn():
 
 @contextmanager
 #prints a time-stamp log message with a status
-def loginfo(typ=INFO):
+def logstat(typ=INFO):
     mccon_out.write(_logprefix(typ))
     yield
 
