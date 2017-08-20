@@ -307,11 +307,12 @@ class MCConErr():
             with lock:
                 #if the exception header is enabled, add it to the queue
                 if self.queue.empty() and self.print_header:
-                    self.queue.put('\n' + STDERR_BG_COL + _logprefix() +
-                        self.msg + NO_COLOUR + '\n')
-                self.queue.put(text)
+                    self.queue.put(('\n' + STDERR_BG_COL + _logprefix() +
+                        self.msg + NO_COLOUR + '\n',self.user))
+                self.queue.put((text,self.user))
                 if self.t is None:
-                    self.t = Timer(timeout,self.write_buffer,args=[False])
+                    self.t = Timer(timeout,self.write_buffer,
+                        args=[False])
                     self.t.start()
         except:
             traceback.print_exc(file=self.old)
@@ -332,11 +333,11 @@ class MCConErr():
                     mccon_out.allowed = False
                     try:
                         #try to get an item
-                        text = self.queue.get(True,timeout)
+                        text, user = self.queue.get(True,timeout)
                         text = text.replace('\n','\n'+STDERR_PREFIX+STDERR_SPACE)
                     except: #failed to get item in the timeout
                         if not self.file_only and \
-                            ((self.user and user_mode) or not user_mode):
+                            ((user and user_mode) or not user_mode):
                             if self.log:
                                 self.log.write('\n')
                             self.old.write('\n'+NO_COLOUR)
@@ -345,7 +346,7 @@ class MCConErr():
                         break
                     #print if: in user mode and done with user() or not in user mode
                     if not self.file_only and \
-                        ((self.user and user_mode) or not user_mode):
+                        ((user and user_mode) or not user_mode):
                         self.old.write(self.process_text(text))
                     #remove the colour prefix
                     if STDERR_BG_COL in text:
@@ -398,7 +399,20 @@ def file_only():
 
 @contextmanager
 def none():
+    u1 = mccon_out.user
+    u2 = mccon_err.user
+    er = mccon_out.error
+    w1 = mccon_out.warn
+    w2 = mccon_err.warn
+    mccon_out.user = mccon_err.user = \
+        mccon_out.error = mccon_err.warn = mccon_out.warn = False
     yield
+    mccon_out.user = u1
+    mccon_err.user = u2
+    mccon_out.error = er
+    mccon_out.warn = w1
+    mccon_err.warn = w2
+
 
 @contextmanager
 def user():
