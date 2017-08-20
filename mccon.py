@@ -76,6 +76,7 @@ global INFO, WARN, ERROR
 INFO = 'INFO'
 WARN = 'WARN'
 ERRO = 'ERRO'
+INPT = 'INPT'
 stat_highlight = {}
 
 # first up, make stderr and stdout unbuffered
@@ -149,7 +150,9 @@ def init(colour=True, log=None, default_prefix='mccon',\
     #status code highlighting
     stat_highlight.update({INFO : INFO_COLOUR,
                            WARN : WARN_COLOUR,
-                           ERRO : ERROR_COLOUR})
+                           ERRO : ERROR_COLOUR,
+                           INPT : USER_INPUT_COLOUR
+    })
 
     global mccon_out, mccon_err
     if log is not None:
@@ -502,11 +505,11 @@ def user_input(msg=PROMPT, visible=True):
         old_stdout.write(NO_COLOUR + DISABLED_COLOUR)
     if visible:
         val = raw_input()
-        with file_only(), logstat('INPT'):
+        with file_only(), logstat(INPT):
             print msg + val
     else:
         val = getpass.getpass('')
-        with file_only(), logstat('INPT'):
+        with file_only(), logstat(INPT):
             print msg + '********'
     return val
 
