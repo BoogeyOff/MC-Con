@@ -294,15 +294,8 @@ class MCConErr():
                 msg_col = USER_COLOUR \
                     if self.user else msg_col
                 #format the text
-                #if STDERR_BG_COL in text:
-                #    pass
-                    #form_text = text.replace(STDERR_HEADER, \
-                    #    STDERR_BG_COL + STDERR_HEADER) + NO_COLOUR
-                #else:
                 form_text = text.replace(STDERR_PREFIX, \
                     STDERR_BG_COL + STDERR_PREFIX + NO_COLOUR + msg_col)
-                #form_text = form_text.replace(SEPARATOR,
-                #    DISABLED_COLOUR + SEPARATOR + NO_COLOUR + STDERR_BG_COL)
                 return form_text
         except:
             traceback.print_exc(file=self.old)
@@ -394,7 +387,7 @@ def close():
 def gen_color(code, bright=False):
     return '\033['+str(code) + (';1m' if bright else 'm') #+ ' ' + \
     #    str(code*10+(1 if bright else 0)) + '_'
-    #comment out the above two lines for debugging
+    #un-comment out the above two lines to print colour codes for debugging
 
 @contextmanager
 def file_only():
@@ -421,7 +414,7 @@ def user_err():
 
 @contextmanager
 # highlight with the default colour scheme
-def highlight(hiwords, lowords):
+def highlight(hiwords, lowords=[]):
     old_himap = mccon_out.high_words
     old_lomap = mccon_out.low_words
     high_map = {}
