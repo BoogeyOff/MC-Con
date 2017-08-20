@@ -291,8 +291,6 @@ class MCConErr():
                 #pick the message colour
                 msg_col = STDERR_COL \
                     if self.error else WARN_COLOUR
-                msg_col = USER_COLOUR \
-                    if self.user else msg_col
                 #format the text
                 form_text = text.replace(STDERR_PREFIX, \
                     STDERR_BG_COL + STDERR_PREFIX + NO_COLOUR + msg_col)
@@ -401,16 +399,20 @@ def none():
 
 @contextmanager
 def user():
+    u1 = mccon_out.user
+    u2 = mccon_err.user
     mccon_out.user = True
+    mccon_err.user = True
     yield
-    mccon_out.user = False
-    #print '',
+    mccon_out.user = u1
+    mccon_err.user = u2
 
 @contextmanager
 def user_err():
+    u2 = mccon_err.user
     mccon_err.user = True
     yield
-    mccon_err.user = False
+    mccon_err.user = u2
 
 @contextmanager
 # highlight with the default colour scheme
@@ -488,24 +490,25 @@ def _logprefix(typ=None):
 # retrieved through getpass, and the received input isn't logged to file
 # whether to block all other output from being printed to the console
 def user_input(msg=PROMPT, visible=True):
-    with user():
-        if user_mode:
-            if use_colour:
-                old_stdout.write(NO_COLOUR + PROMPT_COLOUR +
-                    msg + USER_INPUT_COLOUR)
-            else:
-                old_stdout.write(msg)
+    #with user():
+    if user_mode:
+        if use_colour:
+            old_stdout.write(NO_COLOUR + PROMPT_COLOUR +
+                msg + USER_INPUT_COLOUR)
         else:
-            old_stdout.write(NO_COLOUR + DISABLED_COLOUR)
-        if visible:
-            val = raw_input()
-            with file_only():
-                print msg + val
-        else:
-            val = getpass.getpass('')
-            with file_only():
-                print msg + '********'
-        return val
+            old_stdout.write(msg)
+    else:
+        msg = ''
+        old_stdout.write(NO_COLOUR + DISABLED_COLOUR)
+    if visible:
+        val = raw_input()
+        with file_only(), logstat('INPT'):
+            print msg + val
+    else:
+        val = getpass.getpass('')
+        with file_only(), logstat('INPT'):
+            print msg + '********'
+    return val
 
 @contextmanager
 def err_header_msg(msg):
